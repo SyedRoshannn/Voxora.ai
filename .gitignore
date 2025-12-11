@@ -33,3 +33,13 @@ build
 *.njsproj
 *.sln
 *.sw?
+node_modules/
+dist/
+build/
+.vscode/
+__pycache__/
+*.pyc
+app.db
+*.sqlite
+.env
+*.log
