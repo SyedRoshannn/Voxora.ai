@@ -1,0 +1,168 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes ping-slow {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+  75%, 100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+@keyframes ping-slow-2 {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+  70%, 100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.animate-ping-slow {
+  animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.animate-ping-slow-2 {
+  animation: ping-slow-2 2s cubic-bezier(0, 0, 0.2, 1) infinite 0.3s;
+}
+
+/* VoiceAI Assistant Design System - Modern AI Interface */
+
+@layer base {
+  :root {
+    --background: 0 0% 95%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
+    --primary-glow: 240 4.9% 83.9%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --accent-glow: 240 4.8% 83.9%;
+    --success: 142.1 76.2% 36.3%;
+    --success-foreground: 0 0% 98%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 5.9% 10%;
+    --ai-voice-active: 184 90% 35%;
+    --ai-voice-inactive: 240 4.9% 83.9%;
+    --ai-assistant-bg: 240 5.9% 10%;
+    --ai-chat-user: 240 5.9% 10%;
+    --ai-chat-assistant: 240 5.9% 10%;
+    --gradient-primary: linear-gradient(135deg, hsl(0, 0%, 2%), hsl(240, 41%, 49%));
+    --gradient-accent: linear-gradient(135deg, hsl(199, 73%, 42%), hsl(193, 56%, 49%));
+    --gradient-voice: linear-gradient(135deg, hsl(273, 15%, 46%), hsl(274, 91%, 26%));
+    --gradient-bg: linear-gradient(180deg, hsl(39, 80%, 58%), hsl(32, 91%, 60%));
+    --shadow-ai: 0 1px 3px 0 rgba(34, 164, 244, 0.1), 0 1px 2px -1px rgba(26, 196, 252, 0.1);
+    --shadow-voice: 0 0 0 1px rgba(0, 0, 0, 0.05);
+    --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --radius: 0.5rem;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 240 5.9% 90%;
+    --sidebar-ring: 240 5.9% 10%;
+  }
+
+  .dark {
+    --background: 16 24 40;
+    --foreground: 248 250 252;
+
+    --card: 30 41 59;
+    --card-foreground: 248 250 252;
+
+    --popover: 30 41 59;
+    --popover-foreground: 248 250 252;
+
+    --primary: 239 68 68;
+    --primary-foreground: 255 255 255;
+    --primary-glow: 251 113 133;
+
+    --secondary: 71 85 105;
+    --secondary-foreground: 248 250 252;
+
+    --muted: 30 41 59;
+    --muted-foreground: 148 163 184;
+
+    --accent: 59 130 246;
+    --accent-foreground: 255 255 255;
+    --accent-glow: 96 165 250;
+
+    --success: 34 197 94;
+    --success-foreground: 255 255 255;
+
+    --destructive: 239 68 68;
+    --destructive-foreground: 255 255 255;
+
+    --border: 71 85 105;
+    --input: 71 85 105;
+    --ring: 239 68 68;
+
+    /* Dark mode AI colors */
+    --ai-voice-active: 139 92 246;
+    --ai-voice-inactive: 71 85 105;
+    --ai-assistant-bg: 30 41 59;
+    --ai-chat-user: 239 68 68;
+    --ai-chat-assistant: 100 116 139;
+
+    /* Dark mode gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(239, 96%, 9%), hsl(251 113% 133%));
+    --gradient-accent: linear-gradient(135deg, hsl(59 130% 246%), hsl(96 165% 250%));
+    --gradient-voice: linear-gradient(135deg, hsl(139 92% 246%), hsl(168 85% 247%));
+    --gradient-bg: linear-gradient(180deg, hsl(0, 0%, 0%), hsl(273, 57%, 22%));
+
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  @keyframes voice-wave {
+    0%, 100% {
+      transform: scaleY(0.8);
+    }
+    50% {
+      transform: scaleY(1.5);
+    }
+  }
+  
+  .animate-voice-wave {
+    animation: voice-wave 1.5s ease-in-out infinite;
+  }
+}
