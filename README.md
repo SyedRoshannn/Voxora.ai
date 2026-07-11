@@ -3,6 +3,15 @@
 Voxora.AI is an interactive web application that transforms speech into meaningful insights.
 It offers **voice recognition**, **speech summarization**, **language translation**, **text-to-speech**, and more — powered by a modern full-stack workflow using **React, TypeScript, TailwindCSS, and Python**.
 
+Images:
+<img width="1920" height="1080" alt="Screenshot 2025-12-22 150827" src="https://github.com/user-attachments/assets/60e080e0-56f2-4285-84be-92deb758c070" />
+<img width="1920" height="1080" alt="Screenshot 2026-01-08 193448" src="https://github.com/user-attachments/assets/1f08625b-50e4-4b54-97a4-6d8f90008193" />
+<img width="1920" height="1080" alt="Screenshot 2026-01-08 193548" src="https://github.com/user-attachments/assets/fd2ecf16-9f56-45e9-b67e-28fe1923aa57" />
+<img width="1920" height="1080" alt="Screenshot 2026-01-08 195431" src="https://github.com/user-attachments/assets/e9707731-f7b4-4ae3-8d05-5f434c36a6af" />
+<img width="1920" height="1080" alt="Screenshot 2026-01-08 195836" src="https://github.com/user-attachments/assets/cc411ac7-865d-4874-a92a-e0bae62dd594" />
+<img width="1920" height="1080" alt="Screenshot 2025-12-22 152241" src="https://github.com/user-attachments/assets/9a4941c3-c233-47cd-98f3-bdcbad5c099b" />
+
+
 ---
 
 ## 🚀 **Features**
