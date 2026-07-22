@@ -1,7 +1,6 @@
-# ⭐ **Voxora.AI – Intelligent Voice Recognition & Speech Summarization System**
+# ⭐ **Voxora.AI – Intelligent Voice Assistant & Speech Analytics Platform**
 
-Voxora.AI is an interactive web application that transforms speech into meaningful insights.
-It offers **voice recognition**, **speech summarization**, **language translation**, **text-to-speech**, and more — powered by a modern full-stack workflow using **React, TypeScript, TailwindCSS, and Python**.
+Voxora.AI is a premium, interactive full-stack web application designed to capture, transcribe, analyze, and translate voice communications. Built with a decoupled architecture using **React, TypeScript, Vite, TailwindCSS, and Python (FastAPI)**, it provides a clean, secure, and low-latency workspace for managing speech-to-text notes, automated summaries, multi-language translations, and natural vocal playbacks.
 
 Images:
 <img width="1920" height="1080" alt="Screenshot 2025-12-22 150827" src="https://github.com/user-attachments/assets/60e080e0-56f2-4285-84be-92deb758c070" />
@@ -14,165 +13,136 @@ Images:
 
 ---
 
-## 🚀 **Features**
+## 🚀 **Core Features**
 
-* 🎤 **Speech-to-Text Conversion** – Converts live voice input into accurate text.
-* 📝 **AI Summarization** – Summarizes long speech/text into concise content.
-* 🌐 **Multi-Language Translation** – Translate text into 10+ global languages.
-* 🔊 **Text-to-Speech Output** – Read out your text in a natural voice.
-* 📦 **Download/Save Notes** – Save transcriptions as notes for later use.
-* ⚡ **Responsive UI/UX** – Clean, modern interface built with TailwindCSS.
-* 🧩 **Modular Components** – Easy-to-maintain and scalable architecture.
+* 🎤 **Real-Time Speech-to-Text (STT):** Converts live microphone input into written text in real time using native browser Web Speech APIs. Highly accurate and zero-latency capture.
+* 🧠 **AI-Powered Summarization:** Condenses long voice recordings or text blocks into structured summaries using the `facebook/bart-large-cnn` sequence-to-sequence model via Hugging Face Inference.
+* 🌐 **Multi-Language Translation:** Translates transcriptions into 50+ global languages. Utilizes server-side translation modules and external services (supports major global and regional languages like Arabic, Chinese, French, Spanish, Hindi, Kannada, Tamil, Telugu, and more).
+* 🔊 **Natural Text-to-Speech (TTS):** Plays back transcribed text in natural spoken voices via browser SpeechSynthesis, including custom fallback profiles.
+* 🗣️ **Intelligent Voice Commands:** Supports hands-free navigation and system control:
+  * *"New note"* — Resets the workspace.
+  * *"Save note"* / *"Save this"* — Saves the note to your cloud-synced account.
+  * *"Clear text"* / *"Clear note"* — Empties the text editor.
+  * *"Read notes"* — Reads your latest saved note out loud.
+  * *"Delete last note"* — Removes the most recent note entry.
+  * *"Delete all notes"* — Deletes all notes.
+  * *"Search notes for [keyword]"* — Searches notes for a keyword and reads search results out loud.
+  * *"Stop listening"* / *"Stop recording"* — Disables the active microphone.
+* 🔐 **User Authentication & Security:** Secure user registration and login pathways. Passwords are encrypted using `pbkdf2_sha256` hashing and API endpoints are guarded with HS256 JWT bearer tokens.
+* 📂 **Persistent Note Storage:** Fully managed SQLite database integration storing and syncing user notes chronologically with complete CRUD capabilities.
+* 📥 **Vector Document Export:** Exports your notes locally to your device as:
+  * **Portable Document Format (PDF):** Generated client-side using `jsPDF` with automatic line-wrapping and multi-page calculations.
+  * **Plain Text Document (TXT):** Generated using browser-native Blob endpoints.
+* 🔗 **Multi-Platform Content Sharing:** Quick-share menu to instantly copy text to the clipboard or send note content directly to **WhatsApp, Instagram, and Telegram**, or utilize native system share drawers.
+* 🎨 **Premium Responsive UI/UX:** Responsive dark mode layout utilizing Tailwind CSS, smooth Framer Motion micro-animations, Radix UI widgets, and a custom visualizer animating microphone amplitude.
 
 ---
 
-## 🛠️ **Tech Stack**
+## 🛠️ **Tech Stack & Architecture**
 
 ### **Frontend**
-
-* React (Vite + TypeScript)
-* TailwindCSS
-* ShadCN UI Components
-* Lucide Icons
+* React 18 (Vite + TypeScript)
+* TailwindCSS (Responsive Grid & Flexbox)
+* Framer Motion (Transitions & Visualizations)
+* TanStack React Query v5 (Declarative caching & server synchronization)
+* Radix UI Primitives (Accessible UI widgets)
+* jsPDF (Client-side PDF compiler)
 
 ### **Backend**
+* Python 3.8+
+* FastAPI (Asynchronous high-performance API framework)
+* SQLAlchemy ORM (Database query mapping)
+* Passlib & Python-Jose (Credentials security and JWT cryptography)
+* Uvicorn (ASGI web server)
 
-* Python
-* FastAPI / Flask (depending on your final setup)
-* REST API for summarization, translation, and speech logic
-
-### **Tools & Configurations**
-
-* ESLint
-* PostCSS
-* Git & GitHub
-* Modern build pipeline
+### **Database & Storage**
+* SQLite (Local persistent storage via `app.db`)
+* Dynamic mapping for production PostgreSQL databases (Neon/Supabase)
 
 ---
 
-## 📸 **Screenshots (Optional – add later)**
+## ⚙️ **Installation & Local Setup**
 
-You can add:
-
-* Home page
-* Translator module
-* Summarization UI
-* Speech-to-text UI
-* Flow diagram
-
-(Add screenshots to `/assets` folder)
-
----
-
-## ⚙️ **Installation & Setup**
-
-### **1. Clone the repository**
-
+### **1. Clone the Repository**
 ```bash
-git clone https://github.com/<your-username>/Voxora.ai.git
-cd Voxora.ai
+git clone https://github.com/SyedRoshannn/Voxora.ai.git
+cd Voxora.ai/sonic-intel-main/sonic-intel-main
 ```
 
-### **2. Install frontend dependencies**
-
+### **2. Frontend Setup**
+Install package dependencies and start the Vite dev server:
 ```bash
 npm install
-```
-
-### **3. Run the development server**
-
-```bash
 npm run dev
 ```
+*Frontend will launch locally (typically at `http://localhost:8080` or `http://localhost:8081`)*
 
-### **4. (Optional) Start Python backend**
-
+### **3. Backend Setup**
+Navigate to the root directory (where `backend/` resides), activate a virtual environment, install requirements, and run the API server:
 ```bash
-python app.py
+# Optional: Create and activate virtual environment
+python -m venv venv
+# On Windows:
+.\venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
+
+# Install requirements
+pip install -r backend/requirements.txt
+
+# Run FastAPI backend via Uvicorn on port 8000
+python -m uvicorn backend.main:app --port 8000 --reload
 ```
+*Backend will run locally at `http://127.0.0.1:8000` with auto-reload enabled.*
 
-or
+---
 
-```bash
-uvicorn app:app --reload
+## 🔑 **Environment Variables**
+
+Create a `.env` file in the root folder containing the following keys:
+
+```env
+# Hugging Face API Token (for AI Summarization)
+VITE_HUGGINGFACE_TOKEN=your_huggingface_inference_token
+
+# Frontend API Connectors
+VITE_API_BASE_URL=http://127.0.0.1:8000
+VITE_API_URL=http://localhost:8000
 ```
 
 ---
 
-## 📦 **Project Structure**
+## 🚀 **Production Deployment**
 
-```
-Voxora.ai/
-│── src/
-│   ├── components/
-│   ├── pages/
-│   ├── hooks/
-│   ├── utils/
-│   └── styles/
-│── public/
-│── backend/ (if using Python API)
-│── package.json
-│── vite.config.ts
-│── README.md
-```
+### **1. Backend (Render)**
+1. Create a **Web Service** on Render.
+2. Set Build Command: `pip install -r backend/requirements.txt`
+3. Set Start Command: `python -m uvicorn backend.main:app --host 0.0.0.0 --port $PORT`
+4. Add Environment Variables:
+   * `ALLOWED_ORIGINS` = `https://your-vercel-frontend-domain.vercel.app`
+   * `SECRET_KEY` = `your_secure_random_string`
+   * `DATABASE_URL` = *(Optional: Connect neon.tech or supabase.co Postgres database string for cloud storage persistence)*
 
----
-
-## 🤖 **Features Breakdown**
-
-### **1. Speech-to-Text**
-
-* Uses browser audio APIs
-* Converts speech → text in real time
-* Auto inserts into main editor
-
-### **2. AI Text Summarization**
-
-* Summaries long text
-* Clean, short, context-aware output
-
-### **3. Translator**
-
-* Converts text to multiple languages
-* Supports: Arabic, Hindi, French, Japanese, Chinese, Korean, German, Spanish & more
-
-### **4. Text-to-Speech**
-
-* Natural digital voice
-* Adjustable settings (if you add features later)
-
----
-
-## 🧪 **Future Enhancements**
-
-* Offline speech recognition
-* Emotion detection from voice
-* Custom wake word (“Hey Voxora”)
-* User authentication
-* Cloud note storage
-* Multi-voice output
-* Export notes as PDF
+### **2. Frontend (Vercel)**
+1. Import the repository into Vercel.
+2. Set Framework Preset: `Vite`
+3. Build Command: `npm run build`
+4. Output Directory: `dist`
+5. Add Environment Variables:
+   * `VITE_API_BASE_URL` = `https://your-render-backend-url.onrender.com`
+   * `VITE_API_URL` = `https://your-render-backend-url.onrender.com`
+   * `VITE_HUGGINGFACE_TOKEN` = `your_huggingface_inference_token`
 
 ---
 
 ## 🧑‍💻 **Author**
 
 **Syed Roshan**
-
-* Computer Science Engineer
 * AI & Full-Stack Web Developer
 * LinkedIn: [https://www.linkedin.com/in/syed-roshan-a86857257](https://www.linkedin.com/in/syed-roshan-a86857257)
+* GitHub: [https://github.com/SyedRoshannn](https://github.com/SyedRoshannn)
 
 ---
 
-## ⭐ **Show Your Support**
-
-If you like the project, please ⭐ star the repo — it motivates continued development!
-
----
-
-## 🔐 License
-
-This project is licensed under the **MIT License** (or whichever license you prefer).
-
----
+## 🔐 **License**
+This project is licensed under the **MIT License**.

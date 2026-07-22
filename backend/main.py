@@ -38,7 +38,17 @@ origins = [
     "http://127.0.0.1:5173",
     "http://localhost:8080",
     "http://127.0.0.1:8080",
+    "http://localhost:8081",
+    "http://127.0.0.1:8081",
 ]
+
+import os
+allowed_origins_env = os.getenv("ALLOWED_ORIGINS")
+if allowed_origins_env:
+    for origin in allowed_origins_env.split(","):
+        clean_origin = origin.strip()
+        if clean_origin and clean_origin not in origins:
+            origins.append(clean_origin)
 
 app.add_middleware(
     CORSMiddleware,
@@ -60,24 +70,36 @@ def register(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
             detail="Email already registered",
         )
 
+    # Create new user with default role
     user = models.User(
         name=user_in.name,
         email=user_in.email,
         hashed_password=get_password_hash(user_in.password),
+        role="user"  # Set default role
     )
     db.add(user)
     db.commit()
     db.refresh(user)
 
+    # Create access token
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": str(user.id)}, expires_delta=access_token_expires
     )
-
-    return schemas.TokenResponse(
-        access_token=access_token,
-        user=schemas.UserRead.from_orm(user),
-    )
+    
+    # Create user data for response
+    user_data = {
+        "id": user.id,
+        "email": user.email,
+        "name": user.name,
+        "role": user.role
+    }
+    
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": user_data
+    }
 
 
 @app.post("/auth/login", response_model=schemas.TokenResponse)

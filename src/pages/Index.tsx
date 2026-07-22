@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -265,85 +265,93 @@ const Index = () => {
       });
     }
   };
+  const handleVoiceCommand = useCallback(async (text: string) => {
+    const lowerText = text.toLowerCase().trim();
+    if (!lowerText) return;
 
-  const handleVoiceCommand = async (text: string) => {
-    const lowerText = text.toLowerCase();
-    
-    // Common function to handle command response
-    const handleCommand = async (response: string, action?: () => void) => {
-      // Clear the current transcript first
-      resetTranscript();
-      lastProcessedTranscript.current = '';
-      
-      // Execute the action if provided
-      if (action) {
-        await new Promise<void>((resolve) => {
-          action();
-          // Small delay to ensure state updates
-          setTimeout(resolve, 100);
-        });
-      }
-      
-      // Only speak if not already speaking
-      if (!isSpeaking) {
-        await new Promise<void>((resolve) => {
-          speakText(response);
-          // Prevent multiple speech triggers
-          setTimeout(resolve, 1000);
-        });
+    const handleCommand = async (response: string, action?: () => Promise<void> | void) => {
+      try {
+        resetTranscript();
+        lastProcessedTranscript.current = '';
+
+        if (action) {
+          await action();
+        }
+
+        if (response && !isSpeaking) {
+          // Use the speak function with explicit language parameter
+          console.log(`Speaking in language: ${language}`);
+          speakText(response, language);
+          
+          // Wait for speech to complete (approximate)
+          // Longer delay for non-English languages that might take more time to speak
+          const delay = response.length * (language.startsWith('en') ? 100 : 150);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      } catch (error) {
+        console.error('Error in handleCommand:', error);
       }
     };
-    
-    if (lowerText.includes('new note')) {
-      handleCommand("New note created", () => setCurrentText(''));
-    } else if (lowerText.includes('save note') || lowerText.includes('save this')) {
-      handleCommand("Note saved successfully", handleSaveNote);
-    } else if (lowerText.includes('clear text') || lowerText.includes('clear note')) {
-      handleCommand("Text cleared", () => setCurrentText(''));
-    } else if (lowerText.includes('read notes') || lowerText.includes('read my notes')) {
-      if (notes.length > 0) {
-        handleCommand(`You have ${notes.length} notes. Here's your latest note: ${notes[0].text}`);
-      } else {
-        handleCommand("You don't have any notes saved yet.");
-      }
-    } else if (lowerText.includes('delete last note') || lowerText.includes('remove last note')) {
-      if (notes.length > 0) {
-        const deletedNote = notes[0];
-        handleCommand("Last note deleted", () => handleDeleteNote(deletedNote.id));
-      } else {
-        handleCommand("No notes to delete");
-      }
-    } else if (lowerText.includes('delete all notes') || lowerText.includes('clear all notes')) {
-      handleCommand("All notes have been deleted", handleClearAllNotes);
-    } else if (lowerText.includes('search notes for')) {
+
+    if (lowerText.includes('stop listening') || lowerText.includes('stop recording')) {
+      stopListening();
+      await handleCommand("Stopped listening");
+      return;
+    }
+    else if (lowerText.includes('new note')) {
+      await handleCommand("New note created", () => setCurrentText(''));
+    } 
+    else if (lowerText.includes('save note') || lowerText.includes('save this')) {
+      await handleCommand("Note saved successfully", handleSaveNote);
+    }
+    else if (lowerText.includes('clear text') || lowerText.includes('clear note') || lowerText.includes('clear the text')) {
+      setCurrentText('');
+      await handleCommand("Text cleared");
+    }
+    else if (lowerText.includes('delete all notes') || lowerText.includes('clear all notes')) {
+      await handleCommand("All notes deleted", handleClearAllNotes);
+    }
+    else if (lowerText.includes('search notes for')) {
       const searchTerm = text.split('search notes for')[1]?.trim();
       if (searchTerm) {
-        const matchingNotes = notes.filter(note => 
+        const matchingNotes = notes.filter(note =>
           note.text.toLowerCase().includes(searchTerm.toLowerCase())
         );
+
         if (matchingNotes.length > 0) {
-          handleCommand(`Found ${matchingNotes.length} notes containing "${searchTerm}"`);
-          // Highlight matching notes in the UI (optional)
-          // You could add state to track search results and highlight them
+          await handleCommand(`Found ${matchingNotes.length} notes containing "${searchTerm}"`);
         } else {
-          handleCommand(`No notes found containing "${searchTerm}"`);
+          await handleCommand(`No notes found containing "${searchTerm}"`);
         }
       }
-    } else if (lowerText.includes('stop listening') || lowerText.includes('stop voice')) {
-      if (isListening) {
-        stopListening();
-        speakText("Stopped listening");
-      }
     }
-  };
+
+  }, [
+    notes,
+    resetTranscript,
+    speakText,
+    isSpeaking,
+    handleSaveNote,
+    handleDeleteNote,
+    handleClearAllNotes
+  ]);
+
 
   // Check for voice commands when transcript updates
   const lastProcessedTranscript = useRef('');
   const isProcessing = useRef(false);
+  const commandCooldown = useRef(false);
   
   useEffect(() => {
     const processCommand = async () => {
-      if (!transcript || transcript === lastProcessedTranscript.current || isProcessing.current) {
+      // Skip if no transcript, already processed, or already processing
+      if (!transcript || transcript === lastProcessedTranscript.current || isProcessing.current || commandCooldown.current) {
+        return;
+      }
+      
+      // Skip if the transcript hasn't changed meaningfully
+      if (lastProcessedTranscript.current && 
+          transcript.toLowerCase().includes(lastProcessedTranscript.current.toLowerCase())) {
         return;
       }
       
@@ -352,16 +360,27 @@ const Index = () => {
       
       try {
         await handleVoiceCommand(transcript);
+      } catch (error) {
+        console.error('Error processing voice command:', error);
       } finally {
-        // Small delay to prevent rapid re-processing
+        // Set a cooldown period to prevent rapid re-processing of the same command
+        commandCooldown.current = true;
         setTimeout(() => {
-          isProcessing.current = false;
-        }, 1000);
+          commandCooldown.current = false;
+        }, 2000); // 2 second cooldown
+        
+        isProcessing.current = false;
       }
     };
 
     processCommand();
-  }, [transcript, handleVoiceCommand]);
+    
+    // Cleanup function to reset state when component unmounts
+    return () => {
+      isProcessing.current = false;
+      commandCooldown.current = false;
+    };
+  }, [transcript]);
 
   if (!speechRecognitionSupported) {
     return (

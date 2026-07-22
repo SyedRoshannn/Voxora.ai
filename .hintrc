@@ -3,22 +3,12 @@
     "development"
   ],
   "hints": {
-    "no-inline-styles": "off",
-    "compat-api/css": [
-      "default",
-      {
-        "ignore": [
-          "backdrop-filter"
-        ]
-      }
-    ],
     "axe/aria": [
       "default",
       {
         "aria-required-children": "off",
         "aria-valid-attr-value": "off"
       }
-    ],
-    "button-type": "off"
+    ]
   }
 }

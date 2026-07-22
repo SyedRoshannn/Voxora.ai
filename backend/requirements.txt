@@ -6,3 +6,4 @@ python-jose[cryptography]==3.3.0
 pydantic==2.9.0
 pydantic-settings==2.6.1
 email-validator
+translate==3.8.0
