@@ -1,5 +1,39 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 
+// Map of language codes to their preferred voice names
+const LANGUAGE_VOICE_MAP: Record<string, string[]> = {
+  'ar-SA': ['Microsoft Naayf - Arabic (Saudi Arabia)'],
+  'bn-BD': ['Google বাংলা'],
+  'cs-CZ': ['Google čeština'],
+  'da-DK': ['Google Dansk'],
+  'de-DE': ['Google Deutsch', 'Anna'],
+  'el-GR': ['Google Ελληνικά'],
+  'en-US': ['Google US English', 'Samantha'],
+  'es-ES': ['Google español', 'Monica'],
+  'fi-FI': ['Google suomi'],
+  'fr-FR': ['Google français', 'Amelie'],
+  'hi-IN': ['Google हिन्दी'],
+  'hu-HU': ['Google magyar'],
+  'id-ID': ['Google Bahasa Indonesia'],
+  'it-IT': ['Google italiano', 'Alice'],
+  'ja-JP': ['Google 日本語', 'Kyoko'],
+  'ko-KR': ['Google 한국의', 'Yuna'],
+  'nl-NL': ['Google Nederlands', 'Xander'],
+  'no-NO': ['Google norsk'],
+  'pl-PL': ['Google polski'],
+  'pt-BR': ['Google português do Brasil', 'Luciana'],
+  'pt-PT': ['Google português', 'Joana'],
+  'ro-RO': ['Google română'],
+  'ru-RU': ['Google русский', 'Milena'],
+  'sk-SK': ['Google slovenský'],
+  'sv-SE': ['Google svenska'],
+  'th-TH': ['Google ไทย'],
+  'tr-TR': ['Google Türk'],
+  'zh-CN': ['Google 普通话（中国大陆）', 'Ting-Ting'],
+  'zh-HK': ['Google 粵語（香港）', 'Sin-Ji'],
+  'zh-TW': ['Google 國語（臺灣）', 'Mei-Jia']
+};
+
 declare global {
   interface Window {
     responsiveVoice: any;
@@ -86,57 +120,124 @@ const useTextToSpeech = (options: UseTextToSpeechOptions = {}): UseTextToSpeechR
 
   // Find the best voice for the given language
   const getVoiceForLanguage = useCallback((lang: string): SpeechSynthesisVoice | null => {
-    if (!voices.length) return null;
+    if (!voices.length) {
+      console.warn('No voices available');
+      return null;
+    }
     
     const langLower = lang.toLowerCase();
     const langCode = lang.split('-')[0].toLowerCase();
     
-    // Special handling for Kannada
-    if (langCode === 'kn') {
-      const kannadaVoices = voices.filter(v => 
-        v.lang.toLowerCase().includes('kn') || 
-        v.name.toLowerCase().includes('kannada')
+    console.log(`Looking for voice for language: ${lang} (${langCode})`);
+    console.log('Available voices:', voices.map(v => `${v.name} (${v.lang})`));
+    
+    // Check if we have a preferred voice for this language
+    const preferredVoices = LANGUAGE_VOICE_MAP[lang] || [];
+    for (const voiceName of preferredVoices) {
+      const voice = voices.find(v => 
+        v.name === voiceName || 
+        v.voiceURI === voiceName ||
+        v.lang.toLowerCase() === langLower
       );
-      if (kannadaVoices.length) return kannadaVoices[0];
-      
-      // Try Indian English as fallback for Kannada
-      const indianEnglish = voices.find(v => 
-        v.lang.toLowerCase() === 'en-in' || 
-        v.name.toLowerCase().includes('india')
-      );
-      if (indianEnglish) return indianEnglish;
+      if (voice) {
+        console.log(`Found preferred voice: ${voice.name} (${voice.lang})`);
+        return voice;
+      }
     }
     
-    // Try exact match
+    // Try exact language match
     const exactMatch = voices.find(v => v.lang.toLowerCase() === langLower);
-    if (exactMatch) return exactMatch;
+    if (exactMatch) {
+      console.log(`Found exact language match: ${exactMatch.name} (${exactMatch.lang})`);
+      return exactMatch;
+    }
     
-    // Try language code match
+    // Try language code match (e.g., 'es' for 'es-ES')
     const langMatch = voices.find(v => 
       v.lang.toLowerCase().startsWith(langCode) ||
       v.name.toLowerCase().includes(langCode)
     );
     
-    return langMatch || voices[0] || null;
+    if (langMatch) {
+      console.log(`Found language code match: ${langMatch.name} (${langMatch.lang})`);
+      return langMatch;
+    }
+    
+    // Try to find any voice that might work
+    const anyVoice = voices[0];
+    console.warn(`No exact match found for ${lang}, using first available voice: ${anyVoice?.name} (${anyVoice?.lang})`);
+    return anyVoice || null;
   }, [voices]);
 
   const stop = useCallback(() => {
     try {
+      // Create a new speech synthesis instance to ensure we have a fresh state
+      if (typeof window !== 'undefined') {
+        synthRef.current = window.speechSynthesis;
+      }
+      
       // Stop any ongoing speech synthesis
       if (synthRef.current) {
+        // Cancel any ongoing speech
         synthRef.current.cancel();
+        
+        // Force stop all voices (works around some browser issues)
+        try {
+          const voices = synthRef.current.getVoices();
+          voices.forEach(voice => {
+            try {
+              // This helps in some browsers where cancel() alone doesn't work
+              const utterance = new SpeechSynthesisUtterance('');
+              utterance.voice = voice;
+              synthRef.current?.speak(utterance);
+              synthRef.current?.cancel();
+            } catch (e) {
+              console.warn('Error stopping voice:', e);
+            }
+          });
+        } catch (e) {
+          console.warn('Error getting voices for cleanup:', e);
+        }
       }
       
       // Stop ResponsiveVoice if it's active
-      if (window.responsiveVoice) {
-        window.responsiveVoice.cancel();
+      if (typeof window !== 'undefined' && window.responsiveVoice) {
+        try {
+          window.responsiveVoice.cancel();
+        } catch (e) {
+          console.warn('Error stopping ResponsiveVoice:', e);
+        }
       }
       
+      // Clean up the current utterance
+      if (utteranceRef.current) {
+        try {
+          // Remove all event listeners to prevent memory leaks
+          const utterance = utteranceRef.current;
+          utterance.onend = null;
+          utterance.onerror = null;
+          utterance.onstart = null;
+        } catch (e) {
+          console.warn('Error cleaning up utterance:', e);
+        }
+        utteranceRef.current = null;
+      }
+      
+      // Update state
+      setIsSpeaking(false);
+      setIsOnlineTTS(false);
+      
+      // Force a small delay to ensure state is fully updated
+      setTimeout(() => {
+        setIsSpeaking(false);
+      }, 100);
+      
+    } catch (error) {
+      console.error('Error stopping speech:', error);
+      // Ensure we still update the state even if there's an error
       setIsSpeaking(false);
       setIsOnlineTTS(false);
       utteranceRef.current = null;
-    } catch (error) {
-      console.error('Error stopping speech:', error);
     }
   }, []);
 
@@ -156,11 +257,29 @@ const useTextToSpeech = (options: UseTextToSpeechOptions = {}): UseTextToSpeechR
     console.log(`Speaking text: "${text}" in language: ${language}`);
     stop();
 
-    // Check if language is Kannada
-    if (language.startsWith('kn')) {
-      console.log('Kannada TTS is not yet implemented. Will use default voice.');
-      // We'll implement the API integration later
-      language = 'en-US'; // Fallback to English for now
+    // Normalize language code (e.g., 'en' -> 'en-US')
+    if (language.length === 2) {
+      language = `${language}-${language.toUpperCase()}`;
+    }
+    
+    // Special handling for unsupported languages
+    const unsupportedLanguages = ['kn', 'ta', 'te', 'ml', 'hi'];
+    const langCode = language.split('-')[0].toLowerCase();
+    
+    if (unsupportedLanguages.includes(langCode)) {
+      console.log(`${language} TTS might not be available, trying fallback...`);
+      // Try to find a fallback language
+      const fallbackMap: Record<string, string> = {
+        'kn': 'en-US', // Kannada -> English
+        'ta': 'en-US', // Tamil -> English
+        'te': 'en-US', // Telugu -> English
+        'ml': 'en-US', // Malayalam -> English
+        'hi': 'en-IN'  // Hindi -> Indian English
+      };
+      
+      const fallbackLang = fallbackMap[langCode] || 'en-US';
+      console.log(`Falling back to ${fallbackLang} for ${language}`);
+      language = fallbackLang;
     }
 
     if (!isSupported || !synthRef.current) {

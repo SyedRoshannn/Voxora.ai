@@ -1,38 +1,9 @@
+import { jsPDF } from 'jspdf';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Trash2, Play, FileText } from 'lucide-react';
-// Import pdfmake with proper typing
-import * as pdfMake from 'pdfmake/build/pdfmake';
-import type { TDocumentDefinitions } from 'pdfmake/interfaces';
 import { useToast } from '@/hooks/use-toast';
-
-// Dynamically import vfs_fonts with proper typing
-const loadPdfFonts = async () => {
-  if (typeof window !== 'undefined') {
-    try {
-      const pdfFonts = await import('pdfmake/build/vfs_fonts');
-      // Access the vfs object directly from the module
-      if (pdfFonts && 'default' in pdfFonts && pdfFonts.default && 'vfs' in pdfFonts.default) {
-        (window as any).pdfMake = {
-          ...(window as any).pdfMake,
-          vfs: pdfFonts.default.vfs
-        };
-      }
-    } catch (error) {
-      console.warn('Error loading pdf fonts:', error);
-    }
-  }
-};
-
-// Load fonts when the component mounts
-if (typeof window !== 'undefined') {
-  loadPdfFonts();
-}
-
-// Function to detect if text contains non-Latin characters
-const hasNonLatinText = (text: string): boolean => {
-  return /[^\u0000-\u007F]/.test(text);
-};
+import { useState } from 'react';
 
 export interface Note {
   id: number | string;
@@ -73,73 +44,72 @@ export const NotesList = ({
     });
   };
 
-  const downloadAsPDF = (note: Note) => {
-    try {
-      const date = new Date(note.timestamp).toLocaleString();
-      const useNotoFont = hasNonLatinText(note.text);
-      const font = useNotoFont ? 'NotoSans' : 'Roboto';
-      
-      // Define the document definition with proper types
-      const docDefinition: TDocumentDefinitions = {
-        content: [
-          { 
-            text: 'Voice Note',
-            style: 'header',
-            font
-          },
-          { 
-            text: `Created: ${date}`, 
-            style: 'subheader',
-            font
-          },
-          { 
-            text: note.text, 
-            style: 'content',
-            font
-          }
-        ],
-        styles: {
-          header: {
-            fontSize: 18,
-            bold: true,
-            margin: [0, 0, 0, 10] as [number, number, number, number],
-            color: '#333333'
-          },
-          subheader: {
-            fontSize: 10,
-            color: '#666666',
-            margin: [0, 0, 0, 15] as [number, number, number, number]
-          },
-          content: {
-            fontSize: 12,
-            lineHeight: 1.5,
-            color: '#000000'
-          }
-        },
-        defaultStyle: {
-          font,
-          characterSpacing: 0.5,
-          lineHeight: 1.2
-        }
-      };
+  const [downloading, setDownloading] = useState(false);
 
-      // Create and download the PDF
-      const pdfDocGenerator = pdfMake.createPdf(docDefinition as TDocumentDefinitions);
-      pdfDocGenerator.download(`voice-note-${new Date(note.timestamp).toISOString().split('T')[0]}.pdf`);
-      
-      toast({
-        title: "PDF Downloaded",
-        description: "Your note has been downloaded as a PDF file."
-      });
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      toast({
-        title: "Error",
-        description: "Failed to generate PDF. Please try again.",
-        variant: "destructive"
-      });
+ const handleDownloadPDF = async (note: Note) => {
+  setDownloading(true);
+  try {
+    // Create a new PDF document with UTF-8 encoding
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+      compress: true
+    });
+
+    // Set the default font to a standard one that supports more characters
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(18);
+    
+    // Add title with proper encoding
+    doc.text('Voice Note', 14, 20);
+    
+    // Add creation date
+    doc.setFontSize(10);
+    doc.text(`Created: ${new Date(note.timestamp).toLocaleString()}`, 14, 30);
+    
+    // Set font for the main content
+    doc.setFontSize(12);
+    
+    // Normalize the text to handle any special characters
+    const normalizedText = note.text.normalize('NFKC');
+    
+    // Split text into lines that fit the page width
+    const splitText = doc.splitTextToSize(normalizedText, 180);
+    let yPosition = 40;
+    const lineHeight = 7;
+    
+    // Add text line by line
+    for (let i = 0; i < splitText.length; i++) {
+      if (yPosition > 270 && i < splitText.length - 1) {
+        doc.addPage();
+        yPosition = 20;
+      }
+      doc.text(splitText[i], 14, yPosition);
+      yPosition += lineHeight;
     }
-  };
+    
+    // Save the PDF
+    await new Promise<void>((resolve) => {
+      const filename = `voice-note-${new Date(note.timestamp).toISOString().split('T')[0]}.pdf`;
+      doc.save(filename, { returnPromise: true }).then(() => resolve());
+    });
+    
+    toast({
+      title: "PDF Downloaded",
+      description: "Your note has been downloaded as a PDF file."
+    });
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    toast({
+      title: "Error",
+      description: "Failed to generate PDF. Please try again.",
+      variant: "destructive"
+    });
+  } finally {
+    setDownloading(false);
+  }
+};
 
   if (isLoading) {
     return (
@@ -191,10 +161,15 @@ export const NotesList = ({
                 variant="ghost"
                 size="sm"
                 className="h-8 px-2"
-                onClick={() => downloadAsPDF(note)}
+                onClick={() => handleDownloadPDF(note)}
+                disabled={downloading}
                 title="Download as PDF"
               >
-                <FileText className="h-4 w-4 text-red-500" />
+                {downloading ? (
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-red-500" />
+                ) : (
+                  <FileText className="h-4 w-4 text-red-500" />
+                )}
               </Button>
               <Button
                 variant="ghost"
